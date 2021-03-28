@@ -150,3 +150,14 @@ function savePosition(self)
         file.close()
     end
 end
+function loadWorld(self)
+    local file = fs.open("world.txt", "r")
+    local data
+    if file == nil then
+        return {}
+    else
+        data = file.readAll()
+        file.close()
+        return textutils.unserialize(data)
+    end
+end

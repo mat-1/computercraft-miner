@@ -62,3 +62,14 @@ function savePosition() {
 	}
 }
 
+function loadWorld() {
+	let [ file ] = fs.open('world.txt', 'r')
+	let data
+	if (file == null) {
+		return {}
+	} else {
+		data = file.readAll()
+		file.close()
+		return textutils.unserialize(data)
+	}
+}
