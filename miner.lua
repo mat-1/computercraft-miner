@@ -1832,16 +1832,231 @@ function __TS__TypeOf(value)
 end
 
 end,
-["index"] = function() --[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+["world"] = function() --[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
 require("lualib_bundle");
-function makeCoordinate(self, north, up, east)
+local ____exports = {}
+function ____exports.makeCoordinate(self, north, up, east)
     return {north = north, east = east, up = up}
 end
+function ____exports.stringifyPosition(self, position)
+    if position then
+        return (((tostring(position.north) .. ",") .. tostring(position.up)) .. ",") .. tostring(position.east)
+    else
+        return "?,?,?"
+    end
+end
+function ____exports.unstringifyPosition(self, position)
+    local north, up, east = unpack(
+        __TS__StringSplit(position, ",")
+    )
+    return ____exports.makeCoordinate(
+        nil,
+        __TS__ParseInt(north),
+        __TS__ParseInt(up),
+        __TS__ParseInt(east)
+    )
+end
+local function loadPosition(self)
+    local file = fs.open("position.txt", "r")
+    local data
+    if file == nil then
+        return ____exports.makeCoordinate(nil, 0, 0, 0)
+    else
+        data = file.readAll()
+        file.close()
+        return ____exports.unstringifyPosition(nil, data)
+    end
+end
+____exports.currentPosition = loadPosition(nil)
+function ____exports.savePosition(self, position)
+    ____exports.currentPosition = position
+    local file = fs.open("position.txt", "w")
+    if file ~= nil then
+        file.write(
+            ____exports.stringifyPosition(nil, ____exports.currentPosition)
+        )
+        file.close()
+    end
+end
+local function loadWorld(self)
+    local file = fs.open("world.txt", "r")
+    local data
+    if file == nil then
+        return {}
+    else
+        data = file.readAll()
+        file.close()
+        return textutils.unserialize(data)
+    end
+end
+____exports.world = loadWorld(nil)
+function ____exports.saveWorld(self)
+    local file = fs.open("world.txt", "w")
+    file.write(
+        textutils.serialize(____exports.world)
+    )
+    file.close()
+end
+local DIRECTIONS_OFFSETS = {
+    north = ____exports.makeCoordinate(nil, 1, 0, 0),
+    south = ____exports.makeCoordinate(nil, -1, 0, 0),
+    east = ____exports.makeCoordinate(nil, 0, 0, 1),
+    west = ____exports.makeCoordinate(nil, 0, 0, -1),
+    up = ____exports.makeCoordinate(nil, 0, 1, 0),
+    down = ____exports.makeCoordinate(nil, 0, -1, 0)
+}
+local directionsBack = {north = "south", south = "north", east = "west", west = "east", up = "down", down = "up"}
+local directionsRight = {north = "east", south = "west", east = "south", west = "north"}
+local directionsLeft = {north = "west", south = "east", east = "north", west = "south"}
+____exports.ORES = {"minecraft:coal_ore", "minecraft:iron_ore", "minecraft:gold_ore", "minecraft:lapis_ore", "minecraft:diamond_ore", "minecraft:redstone_ore", "minecraft:emerald_ore"}
+____exports.UNDERGROUND_MINEABLE = {"minecraft:stone", "minecraft:cobblestone", "minecraft:andesite", "minecraft:granite", "minecraft:diorite", "minecraft:obsidian", "minecraft:dirt", "crumbs:cobbled_andesite", "crumbs:cobbled_granite", "crumbs:cobbled_diorite", "wild_explorer:blunite", "wild_explorer:carbonite", "blockus:bluestone"}
+local function loadDirection(self)
+    local file = fs.open("direction.txt", "r")
+    if file == nil then
+        return "north"
+    else
+        local data = file.readAll()
+        file.close()
+        return data
+    end
+end
+____exports.currentDirection = loadDirection(nil)
+local function saveDirection(self)
+    local file, reason = fs.open("direction.txt", "w")
+    file.write(____exports.currentDirection)
+    file.close()
+end
+function ____exports.getCoordinatesForDirection(self, dir)
+    local directionOffsets = DIRECTIONS_OFFSETS[dir]
+    return {north = ____exports.currentPosition.north + directionOffsets.north, east = ____exports.currentPosition.east + directionOffsets.east, up = ____exports.currentPosition.up + directionOffsets.up}
+end
+function ____exports.setBlock(self, position, block)
+    ____exports.world[____exports.stringifyPosition(nil, position)] = block
+end
+function ____exports.getBlock(self, position)
+    return ____exports.world[____exports.stringifyPosition(nil, position)]
+end
+____exports.setBlock(
+    nil,
+    ____exports.makeCoordinate(nil, 0, 0, 0),
+    "minecraft:air"
+)
+function ____exports.turnInDirection(self, dir)
+    local previousDirection = ____exports.currentDirection
+    ____exports.currentDirection = dir
+    saveDirection(nil)
+    if dir == previousDirection then
+        return
+    elseif dir == directionsBack[previousDirection] then
+        turtle.turnRight()
+        turtle.turnRight()
+    elseif dir == directionsLeft[previousDirection] then
+        turtle.turnRight()
+    elseif dir == directionsRight[previousDirection] then
+        turtle.turnLeft()
+    else
+        ____exports.currentDirection = previousDirection
+        saveDirection(nil)
+        error(("ERROR: unknown turn direction \"" .. dir) .. "\"", 0)
+    end
+end
+function ____exports.inspectInDirection(self, dir)
+    local directionCoordinates = ____exports.getCoordinatesForDirection(nil, dir)
+    if ____exports.getBlock(nil, directionCoordinates) then
+        return ____exports.getBlock(nil, directionCoordinates)
+    end
+    local inspectResponse = nil
+    if dir == "up" then
+        inspectResponse = {
+            turtle.inspectUp()
+        }
+    elseif dir == "down" then
+        inspectResponse = {
+            turtle.inspectDown()
+        }
+    else
+        ____exports.turnInDirection(nil, dir)
+        inspectResponse = {
+            turtle.inspect()
+        }
+    end
+    if type(inspectResponse[2]) == "string" then
+        return
+    end
+    local success = inspectResponse[1]
+    local block = inspectResponse[2]
+    local blockName = ((success and (function() return block.name end)) or (function() return "minecraft:air" end))()
+    ____exports.setBlock(nil, directionCoordinates, blockName)
+    return block
+end
+function ____exports.isDirectionVisitedAir(self, dir)
+    local directionCoordinates = ____exports.getCoordinatesForDirection(nil, dir)
+    if ____exports.getBlock(nil, directionCoordinates) then
+        return ____exports.getBlock(nil, directionCoordinates) == "minecraft:air"
+    else
+        return false
+    end
+end
+local function getDistanceTo(self, position, position2)
+    return (math.abs(position.north - position2.north) + math.abs(position.east - position2.east)) + math.abs(position.up - position2.up)
+end
+function ____exports.findNearestBlockPosition(self, blocks, height, center)
+    if center == nil then
+        center = ____exports.currentPosition
+    end
+    local nearestOreDistance = 99999
+    local nearestOrePosition = nil
+    for ____, ____value in ipairs(
+        __TS__ObjectEntries(____exports.world)
+    ) do
+        local blockPositionString
+        blockPositionString = ____value[1]
+        local block
+        block = ____value[2]
+        if __TS__ArrayIncludes(blocks, block) then
+            local blockPosition = ____exports.unstringifyPosition(nil, blockPositionString)
+            if ((height == nil) or (height == blockPosition.up)) and (blockPositionString ~= ____exports.stringifyPosition(nil, ____exports.currentPosition)) then
+                local blockDistance = getDistanceTo(nil, blockPosition, center)
+                if blockDistance < nearestOreDistance then
+                    nearestOreDistance = blockDistance
+                    nearestOrePosition = blockPosition
+                end
+            end
+        end
+    end
+    return nearestOrePosition
+end
+function ____exports.scanAround(self, blocks)
+    local forward, left, right, back = ____exports.currentDirection, directionsLeft[____exports.currentDirection], directionsRight[____exports.currentDirection], directionsBack[____exports.currentDirection]
+    ____exports.inspectInDirection(nil, "up")
+    ____exports.inspectInDirection(nil, "down")
+    if ____exports.getBlock(
+        nil,
+        ____exports.getCoordinatesForDirection(nil, right)
+    ) then
+        ____exports.inspectInDirection(nil, forward)
+        ____exports.inspectInDirection(nil, left)
+        ____exports.inspectInDirection(nil, back)
+    else
+        ____exports.inspectInDirection(nil, forward)
+        ____exports.inspectInDirection(nil, right)
+        ____exports.inspectInDirection(nil, back)
+        ____exports.inspectInDirection(nil, left)
+    end
+    return ____exports.findNearestBlockPosition(nil, blocks)
+end
+return ____exports
+end,
+["index"] = function() --[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+require("lualib_bundle");
+local ____exports = {}
+local world = require("world")
+local TOTAL_SLOTS, refuelAll, moveInDirection, getDirectionTo, isInventoryFull, headingToSpawn, suckInDirection, digInDirection, returnToSpawn, depositAllAtSpawn
 function refuelAll(self)
     local couldRefuel = false
     do
         local i = 1
-        while i < TOTAL_SLOTS do
+        while i <= TOTAL_SLOTS do
             turtle.select(i)
             local r = turtle.refuel()
             if r then
@@ -1857,117 +2072,30 @@ function refuelAll(self)
     end
     turtle.select(1)
 end
-function stringifyPosition(self, position)
-    if position then
-        return (((tostring(position.north) .. ",") .. tostring(position.up)) .. ",") .. tostring(position.east)
-    else
-        return "?,?,?"
-    end
-end
-function savePosition(self)
-    local file = fs.open("position.txt", "w")
-    if file ~= nil then
-        file.write(
-            stringifyPosition(_G, currentPosition)
-        )
-        file.close()
-    end
-end
-function saveDirection(self)
-    local file, reason = fs.open("direction.txt", "w")
-    file.write(currentDirection)
-    file.close()
-end
-function getCoordinatesForDirection(self, dir)
-    local directionOffsets = DIRECTIONS_OFFSETS[dir]
-    return {north = currentPosition.north + directionOffsets.north, east = currentPosition.east + directionOffsets.east, up = currentPosition.up + directionOffsets.up}
-end
-function setBlock(self, position, block)
-    world[stringifyPosition(_G, position)] = block
-end
-function getBlock(self, position)
-    return world[stringifyPosition(_G, position)]
-end
-function turnInDirection(self, dir)
-    local previousDirection = currentDirection
-    currentDirection = dir
-    saveDirection(_G)
-    if dir == previousDirection then
-        return
-    elseif dir == directionsBack[previousDirection] then
-        turtle.turnRight()
-        turtle.turnRight()
-    elseif dir == directionsLeft[previousDirection] then
-        turtle.turnRight()
-    elseif dir == directionsRight[previousDirection] then
-        turtle.turnLeft()
-    else
-        currentDirection = previousDirection
-        saveDirection(_G)
-        error(("ERROR: unknown turn direction \"" .. dir) .. "\"", 0)
-    end
-end
-function inspectInDirection(self, dir)
-    local directionCoordinates = getCoordinatesForDirection(_G, dir)
-    if getBlock(_G, directionCoordinates) then
-        return getBlock(_G, directionCoordinates)
-    end
-    local inspectResponse = nil
-    if dir == "up" then
-        inspectResponse = {
-            turtle.inspectUp()
-        }
-    elseif dir == "down" then
-        inspectResponse = {
-            turtle.inspectDown()
-        }
-    else
-        turnInDirection(_G, dir)
-        inspectResponse = {
-            turtle.inspect()
-        }
-    end
-    if type(inspectResponse[2]) == "string" then
-        return
-    end
-    local success = inspectResponse[1]
-    local block = inspectResponse[2]
-    local blockName = ((success and (function() return block.name end)) or (function() return "minecraft:air" end))()
-    setBlock(_G, directionCoordinates, blockName)
-    return block
-end
-function isDirectionVisitedAir(self, dir)
-    local directionCoordinates = getCoordinatesForDirection(_G, dir)
-    if getBlock(_G, directionCoordinates) then
-        return getBlock(_G, directionCoordinates) == "minecraft:air"
-    else
-        return false
-    end
-end
 function moveInDirection(self, dir)
     local success
     local reason
-    local previousPosition = currentPosition
-    currentPosition = getCoordinatesForDirection(_G, dir)
-    savePosition(_G)
+    local previousPosition = world.currentPosition
+    world:savePosition(
+        world:getCoordinatesForDirection(dir)
+    )
     if dir == "up" then
         success, reason = turtle.up()
     elseif dir == "down" then
         success, reason = turtle.down()
     else
-        turnInDirection(_G, dir)
+        world:turnInDirection(dir)
         success, reason = turtle.forward()
     end
     if success then
-        setBlock(_G, currentPosition, "minecraft:air")
+        world:setBlock(world.currentPosition, "minecraft:air")
     else
-        currentPosition = previousPosition
-        savePosition(_G)
+        world:savePosition(previousPosition)
         if reason == "Out of fuel" then
-            refuelAll(_G)
+            refuelAll(nil)
         elseif reason == "Movement obstructed" then
-            inspectInDirection(_G, dir)
-            digInDirection(_G, dir)
+            world:inspectInDirection(dir)
+            digInDirection(nil, dir)
         end
         print(
             "Error moving: " .. tostring(reason)
@@ -1976,51 +2104,51 @@ function moveInDirection(self, dir)
 end
 function getDirectionTo(self, position, preferVisited)
     local allowedDirections = {}
-    if position.north > currentPosition.north then
+    if position.north > world.currentPosition.north then
         __TS__ArrayPush(allowedDirections, "north")
     end
-    if position.north < currentPosition.north then
+    if position.north < world.currentPosition.north then
         __TS__ArrayPush(allowedDirections, "south")
     end
-    if position.east > currentPosition.east then
+    if position.east > world.currentPosition.east then
         __TS__ArrayPush(allowedDirections, "east")
     end
-    if position.east < currentPosition.east then
+    if position.east < world.currentPosition.east then
         __TS__ArrayPush(allowedDirections, "west")
     end
-    if position.up > currentPosition.up then
+    if position.up > world.currentPosition.up then
         __TS__ArrayPush(allowedDirections, "up")
     end
-    if position.up < currentPosition.up then
+    if position.up < world.currentPosition.up then
         __TS__ArrayPush(allowedDirections, "down")
     end
     if #allowedDirections == 0 then
         error("Already here, no direction", 0)
     elseif preferVisited then
         for ____, direction in ipairs(allowedDirections) do
-            if (currentDirection == direction) and isDirectionVisitedAir(_G, direction) then
+            if (world.currentDirection == direction) and world:isDirectionVisitedAir(direction) then
                 return direction
             end
         end
         for ____, direction in ipairs(allowedDirections) do
-            if isDirectionVisitedAir(_G, direction) then
+            if world:isDirectionVisitedAir(direction) then
                 return direction
             end
         end
     else
         for ____, direction in ipairs(allowedDirections) do
-            if (currentDirection == direction) and (not isDirectionVisitedAir(_G, direction)) then
+            if (world.currentDirection == direction) and (not world:isDirectionVisitedAir(direction)) then
                 return direction
             end
         end
         for ____, direction in ipairs(allowedDirections) do
-            if not isDirectionVisitedAir(_G, direction) then
+            if not world:isDirectionVisitedAir(direction) then
                 return direction
             end
         end
     end
     for ____, direction in ipairs(allowedDirections) do
-        if (currentDirection == direction) and (currentDirection == direction) then
+        if (world.currentDirection == direction) and (world.currentDirection == direction) then
             return direction
         end
     end
@@ -2037,11 +2165,11 @@ function suckInDirection(self, dir)
     elseif dir == "down" then
         success, reason = turtle.suckDown()
     else
-        turnInDirection(_G, dir)
+        world:turnInDirection(dir)
         success, reason = turtle.suck()
     end
-    if isInventoryFull(_G) then
-        depositAllAtSpawn(_G)
+    if isInventoryFull(nil) and (not headingToSpawn) then
+        depositAllAtSpawn(nil)
     end
 end
 function digInDirection(self, dir)
@@ -2052,7 +2180,7 @@ function digInDirection(self, dir)
     elseif dir == "down" then
         success, reason = turtle.digDown()
     else
-        turnInDirection(_G, dir)
+        world:turnInDirection(dir)
         success, reason = turtle.dig()
     end
     if not success then
@@ -2062,231 +2190,116 @@ function digInDirection(self, dir)
                 0
             )
         else
-            suckInDirection(_G, dir)
+            suckInDirection(nil, dir)
         end
     end
-    local blockPosition = getCoordinatesForDirection(_G, dir)
-    setBlock(_G, blockPosition, "minecraft:air")
+    local blockPosition = world:getCoordinatesForDirection(dir)
+    world:setBlock(blockPosition, "minecraft:air")
 end
 function returnToSpawn(self)
-    local spawnPosition = makeCoordinate(_G, 0, 0, 0)
-    while not (((currentPosition.north == 0) and (currentPosition.east == 0)) and (currentPosition.up == 0)) do
-        local recommendedDirection = getDirectionTo(_G, spawnPosition, true)
-        digInDirection(_G, recommendedDirection)
-        moveInDirection(_G, recommendedDirection)
+    headingToSpawn = true
+    print("Going to spawn...")
+    local spawnPosition = world:makeCoordinate(0, 0, 0)
+    while not (((world.currentPosition.north == 0) and (world.currentPosition.east == 0)) and (world.currentPosition.up == 0)) do
+        local recommendedDirection = getDirectionTo(nil, spawnPosition, true)
+        digInDirection(nil, recommendedDirection)
+        moveInDirection(nil, recommendedDirection)
     end
-    turnInDirection(_G, "north")
+    world:turnInDirection("north")
+    headingToSpawn = false
 end
 function depositAllAtSpawn(self)
-    returnToSpawn(_G)
+    returnToSpawn(nil)
     do
         local i = 1
-        while i < TOTAL_SLOTS do
+        while i <= TOTAL_SLOTS do
             turtle.select(i)
             turtle.refuel()
-            turtle.dropDown()
+            local success, reason = turtle.dropDown()
+            if reason then
+                print(reason)
+            end
             i = i + 1
         end
     end
     turtle.select(1)
 end
 TOTAL_SLOTS = 4 * 4
-function unstringifyPosition(self, position)
-    local north, up, east = unpack(
-        __TS__StringSplit(position, ",")
-    )
-    return makeCoordinate(
-        _G,
-        __TS__ParseInt(north),
-        __TS__ParseInt(up),
-        __TS__ParseInt(east)
-    )
+headingToSpawn = false
+local function scanForOres(self)
+    return world:scanAround(world.ORES)
 end
-function loadPosition(self)
-    local file = fs.open("position.txt", "r")
-    local data
-    if file == nil then
-        return makeCoordinate(_G, 0, 0, 0)
-    else
-        data = file.readAll()
-        file.close()
-        return unstringifyPosition(_G, data)
-    end
-end
-currentPosition = loadPosition(_G)
-function loadWorld(self)
-    local file = fs.open("world.txt", "r")
-    local data
-    if file == nil then
-        return {}
-    else
-        data = file.readAll()
-        file.close()
-        return textutils.unserialize(data)
-    end
-end
-world = loadWorld(_G)
-function saveWorld(self)
-    local file = fs.open("world.txt", "w")
-    file.write(
-        textutils.serialize(world)
-    )
-    file.close()
-end
-DIRECTIONS_OFFSETS = {
-    north = makeCoordinate(_G, 1, 0, 0),
-    south = makeCoordinate(_G, -1, 0, 0),
-    east = makeCoordinate(_G, 0, 0, 1),
-    west = makeCoordinate(_G, 0, 0, -1),
-    up = makeCoordinate(_G, 0, 1, 0),
-    down = makeCoordinate(_G, 0, -1, 0)
-}
-directionsBack = {north = "south", south = "north", east = "west", west = "east", up = "down", down = "up"}
-directionsRight = {north = "east", south = "west", east = "south", west = "north"}
-directionsLeft = {north = "west", south = "east", east = "north", west = "south"}
-ORES = {"minecraft:coal_ore", "minecraft:iron_ore", "minecraft:gold_ore", "minecraft:lapis_ore", "minecraft:diamond_ore", "minecraft:redstone_ore", "minecraft:emerald_ore"}
-UNDERGROUND_MINEABLE = {"minecraft:stone", "minecraft:cobblestone", "minecraft:andesite", "minecraft:granite", "minecraft:diorite", "minecraft:obsidian", "minecraft:dirt", "crumbs:cobbled_andesite", "crumbs:cobbled_granite", "crumbs:cobbled_diorite", "wild_explorer:blunite", "wild_explorer:carbonite", "blockus:bluestone"}
-function loadDirection(self)
-    local file = fs.open("direction.txt", "r")
-    if file == nil then
-        return "north"
-    else
-        local data = file.readAll()
-        file.close()
-        return data
-    end
-end
-currentDirection = loadDirection(_G)
-setBlock(
-    _G,
-    makeCoordinate(_G, 0, 0, 0),
-    "minecraft:air"
-)
-function getDistanceTo(self, position, position2)
-    return
-end
-function findNearestBlockPosition(self, blocks, height, center)
-    if center == nil then
-        center = currentPosition
-    end
-    local nearestOreDistance = 99999
-    local nearestOrePosition = nil
-    for ____, ____value in ipairs(
-        __TS__ObjectEntries(world)
-    ) do
-        local blockPositionString
-        blockPositionString = ____value[1]
-        local block
-        block = ____value[2]
-        if __TS__ArrayIncludes(blocks, block) then
-            local blockPosition = unstringifyPosition(_G, blockPositionString)
-            if ((height == nil) or (height == blockPosition.up)) and (blockPositionString ~= stringifyPosition(_G, currentPosition)) then
-                local blockDistance = getDistanceTo(_G, blockPosition, center)
-                if blockDistance < nearestOreDistance then
-                    nearestOreDistance = blockDistance
-                    nearestOrePosition = blockPosition
-                end
-            end
-        end
-    end
-    return nearestOrePosition
-end
-function scanForOres(self)
-    local forward, left, right, back = currentDirection, directionsLeft[currentDirection], directionsRight[currentDirection], directionsBack[currentDirection]
-    inspectInDirection(_G, "up")
-    inspectInDirection(_G, "down")
-    if getBlock(
-        _G,
-        getCoordinatesForDirection(_G, right)
-    ) then
-        inspectInDirection(_G, forward)
-        inspectInDirection(_G, left)
-        inspectInDirection(_G, back)
-    else
-        inspectInDirection(_G, forward)
-        inspectInDirection(_G, right)
-        inspectInDirection(_G, back)
-        inspectInDirection(_G, left)
-    end
-    return findNearestBlockPosition(_G, ORES)
-end
-function returnToStartingHeight(self)
-    if currentPosition.up == 0 then
+local function returnToStartingHeight(self)
+    if world.currentPosition.up == 0 then
         return
     end
-    if currentPosition.up > 0 then
+    if world.currentPosition.up > 0 then
         do
             local i = 1
-            while i < currentPosition.up do
-                digInDirection(_G, "down")
-                moveInDirection(_G, "down")
+            while i < world.currentPosition.up do
+                digInDirection(nil, "down")
+                moveInDirection(nil, "down")
                 i = i + 1
             end
         end
-    elseif currentPosition.up < 0 then
+    elseif world.currentPosition.up < 0 then
         do
             local i = 1
-            while i < -currentPosition.up do
-                digInDirection(_G, "up")
-                moveInDirection(_G, "up")
+            while i < -world.currentPosition.up do
+                digInDirection(nil, "up")
+                moveInDirection(nil, "up")
                 i = i + 1
             end
         end
     end
 end
-function positionBetween(self, position1, position2)
-    return makeCoordinate(_G, (position1.north + position2.north) / 2, (position1.up + position2.up) / 2, (position1.east + position2.east) / 2)
+local function positionBetween(self, position1, position2)
+    return world:makeCoordinate((position1.north + position2.north) / 2, (position1.up + position2.up) / 2, (position1.east + position2.east) / 2)
 end
-if isInventoryFull(_G) then
-    depositAllAtSpawn(_G)
+print("Ok")
+if isInventoryFull(nil) then
+    depositAllAtSpawn(nil)
 end
 while true do
-    local nearestOrePosition = scanForOres(_G)
-    print("aight nearestOrePosition")
+    local nearestOrePosition = scanForOres(nil)
     if nearestOrePosition then
         print(
-            "To " .. stringifyPosition(_G, nearestOrePosition)
+            "To " .. world:stringifyPosition(nearestOrePosition)
         )
-        local recommendedDirection = getDirectionTo(_G, nearestOrePosition)
-        digInDirection(_G, recommendedDirection)
-        moveInDirection(_G, recommendedDirection)
+        local recommendedDirection = getDirectionTo(nil, nearestOrePosition)
+        digInDirection(nil, recommendedDirection)
+        moveInDirection(nil, recommendedDirection)
     else
-        returnToStartingHeight(_G)
-        print("aight returnToStartingHeight")
-        local nearestMineablePosition = findNearestBlockPosition(
-            _G,
-            UNDERGROUND_MINEABLE,
+        returnToStartingHeight(nil)
+        local nearestMineablePosition = world:findNearestBlockPosition(
+            world.UNDERGROUND_MINEABLE,
             0,
-            makeCoordinate(_G, 0, 0, 0)
+            world:makeCoordinate(0, 0, 0)
         )
-        print("aight nearestMineablePosition")
         local recommendedDirection
         if nearestMineablePosition then
-            recommendedDirection = getDirectionTo(_G, nearestMineablePosition)
+            recommendedDirection = getDirectionTo(nil, nearestMineablePosition)
         else
             recommendedDirection = "north"
         end
         print(
-            ((".To " .. stringifyPosition(_G, nearestMineablePosition)) .. " ") .. tostring(recommendedDirection)
+            ((".To " .. world:stringifyPosition(nearestMineablePosition)) .. " ") .. tostring(recommendedDirection)
         )
-        digInDirection(_G, recommendedDirection)
-        moveInDirection(_G, recommendedDirection)
+        digInDirection(nil, recommendedDirection)
+        moveInDirection(nil, recommendedDirection)
     end
-    if currentPosition.up == 0 then
-        inspectInDirection(_G, "up")
-        print("main up")
-        local upBlock = getBlock(
-            _G,
-            getCoordinatesForDirection(_G, "up")
+    if world.currentPosition.up == 0 then
+        world:inspectInDirection("up")
+        local upBlock = world:getBlock(
+            world:getCoordinatesForDirection("up")
         )
-        if __TS__ArrayIncludes(UNDERGROUND_MINEABLE, upBlock) then
-            digInDirection(_G, "up")
+        if __TS__ArrayIncludes(world.UNDERGROUND_MINEABLE, upBlock) then
+            digInDirection(nil, "up")
         end
     end
-    saveWorld(_G)
+    world:saveWorld()
 end
-end,
-["turtle"] = function() --[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+return ____exports
 end,
 }
 return require("index")
