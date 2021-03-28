@@ -130,13 +130,23 @@ function unstringifyPosition(self, position)
     )
 end
 function loadPosition(self)
-    local file = fs:open("position.txt", "r")
+    local file = fs.open("position.txt", "r")
     local data
     if file == nil then
         return makeCoordinate(_G, 0, 0, 0)
     else
-        data = file:readAll()
-        file:close()
+        data = file.readAll()
+        file.close()
         return unstringifyPosition(_G, data)
+    end
+end
+currentPosition = loadPosition(_G)
+function savePosition(self)
+    local file = fs.open("position.txt", "w")
+    if file ~= nil then
+        file.write(
+            stringifyPosition(_G, currentPosition)
+        )
+        file.close()
     end
 end

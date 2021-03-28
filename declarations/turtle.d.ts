@@ -5,62 +5,62 @@ declare interface Block {
 	count?: number
 }
 
-declare namespace turtle {
+declare let turtle: {
 	/** 
 	 * Move the turtle forward one block.
 	 * @tuplereturn
 	*/
-	function forward(): [ success: boolean, reason: string | null ]
+	forward: (this: void) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Move the turtle backwards one block.
 	 * @tuplereturn
 	*/
-	function back(): [ success: boolean, reason: string | null ]
+	back: (this: void) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Move the turtle up one block.
 	 * @tuplereturn
 	*/
-	function up(): [ success: boolean, reason: string | null ]
+	up: (this: void) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Move the turtle down one block.
 	 * @tuplereturn
 	*/
-	function down(): [ success: boolean, reason: string | null ]
+	down: (this: void) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Rotate the turtle 90 degress to the left.
 	 * @tuplereturn
 	*/
-	function turnLeft(): [ success: boolean, reason: string | null ]
+	turnLeft: (this: void) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Rotate the turtle 90 degress to the right.
 	 * @tuplereturn
 	*/
-	function turnRight(): [ success: boolean, reason: string | null ]
+	turnRight: (this: void) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Rotate the turtle 90 degress to the right.
 	 * @tuplereturn
 	*/
-	function dig(side?: string): [ success: boolean, reason: string | null ]
+	dig: (this: void, side?: string) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Attempt to break the block above the turtle. See `dig` for full details.
 	 * @param side The specific tool to use.
 	 * @tuplereturn
 	*/
-	function digUp(side?: string): [ success: boolean, reason: string | null ]
+	digUp: (this: void, side?: string) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Attempt to break the block below the turtle. See dig for full details.
 	 * @param side The specific tool to use.
 	 * @tuplereturn
 	*/
-	function digDown(side?: string): [ success: boolean, reason: string | null ]
+	digDown: (this: void, side?: string) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Place a block or item into the world in front of the turtle.
@@ -69,21 +69,21 @@ declare namespace turtle {
 	 * @param text When placing a sign, set its contents to this text.
 	 * @tuplereturn
 	*/
-	function place(text?: string): [ success: boolean, reason: string | null ]
+	place: (this: void, text?: string) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Place a block or item into the world above the turtle.
 	 * @param text When placing a sign, set its contents to this text.
 	 * @tuplereturn
 	*/
-	function placeUp(text?: string): [ success: boolean, reason: string | null ]
+	placeUp: (this: void, text?: string) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Place a block or item into the world below the turtle.
 	 * @param text When placing a sign, set its contents to this text.
 	 * @tuplereturn
 	*/
-	function placeDown(text?: string): [ success: boolean, reason: string | null ]
+	placeDown: (this: void, text?: string) => [ success: boolean, reason: string | null ]
 
 
 	/** 
@@ -92,7 +92,7 @@ declare namespace turtle {
 	 * @throws If dropping an invalid number of items.
 	 * @tuplereturn
 	*/
-	function drop(count?: number): [ success: boolean, reason: string | null ]
+	drop: (this: void, count?: number) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Drop the currently selected stack into the inventory above the turtle, or as an item into the world if there is no inventory.
@@ -100,7 +100,7 @@ declare namespace turtle {
 	 * @throws If dropping an invalid number of items.
 	 * @tuplereturn
 	*/
-	function dropUp(count?: number): [ success: boolean, reason: string | null ]
+	dropUp: (this: void, count?: number) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Drop the currently selected stack into the inventory in front of the turtle, or as an item into the world if there is no inventory.
@@ -108,7 +108,7 @@ declare namespace turtle {
 	 * @throws If dropping an invalid number of items.
 	 * @tuplereturn
 	*/
-	function dropDown(count?: number): [ success: boolean, reason: string | null ]
+	dropDown: (this: void, count?: number) => [ success: boolean, reason: string | null ]
 
 	/** 
 	 * Change the currently selected slot.
@@ -117,7 +117,7 @@ declare namespace turtle {
 	 * @param count The slot to select.
 	 * @throws If the slot is out of range.
 	*/
-	function select(slot: number): true
+	select: (this: void, slot: number) => true
 
 	/** 
 	 * Get the number of items in the given slot.
@@ -125,7 +125,7 @@ declare namespace turtle {
 	 * @throws If the slot is out of range.
 	 * @returns The number of items in this slot.
 	*/
-	function getItemCount(slot?: number): number
+	getItemCount: (this: void, slot?: number) => number
 
 	/** 
 	 * Get the remaining number of items which may be stored in this stack.
@@ -135,40 +135,40 @@ declare namespace turtle {
 	 * @throws If the slot is out of range.
 	 * @returns The space left in in this slot.
 	*/
-	function getItemSpace(slot?: number): number
+	getItemSpace: (this: void, slot?: number) => number
 
 	/** 
 	 * Check if there is a solid block in front of the turtle. In this case, solid refers to any non-air or liquid block.
 	 * @returns If there is a solid block in front.
 	*/
-	function detect(): boolean
+	detect: (this: void) => boolean
 
 	/** 
 	 * Check if there is a solid block above the turtle. In this case, solid refers to any non-air or liquid block.
 	 * @returns If there is a solid block in front.
 	*/
-	function detectUp(): boolean
+	detectUp: (this: void) => boolean
 
 	/** 
 	 * Check if there is a solid block below the turtle. In this case, solid refers to any non-air or liquid block.
 	 * @returns If there is a solid block in front.
 	*/
-	function detectDown(): boolean
+	detectDown: (this: void) => boolean
 
 	/**
 	 *
 	*/
-	function compare(): any
+	compare: (this: void) => any
 
 	/**
 	 *
 	*/
-	function compareUp(): any
+	compareUp: (this: void) => any
 
 	/**
 	 *
 	*/
-	function compareDown(): any
+	compareDown: (this: void) => any
 
 	/**
 	 * Attack the entity in front of the turtle.
@@ -177,7 +177,7 @@ declare namespace turtle {
 	 * @returns The reason nothing was attacked.
 	 * @tuplereturn
 	*/
-	function attack(side?: string): [ boolean, string | null ]
+	attack: (this: void, side?: string) => [ boolean, string | null ]
 
 	/**
 	 * Attack the entity above the turtle.
@@ -186,7 +186,7 @@ declare namespace turtle {
 	 * @returns The reason nothing was attacked.
 	 * @tuplereturn
 	*/
-	function attackUp(side?: string): [ boolean, string | null ]
+	attackUp: (this: void, side?: string) => [ boolean, string | null ]
 
 	/**
 	 * Attack the entity below the turtle.
@@ -195,7 +195,7 @@ declare namespace turtle {
 	 * @returns The reason nothing was attacked.
 	 * @tuplereturn
 	*/
-	function attackDown(side?: string): [ boolean, string | null ]
+	attackDown: (this: void, side?: string) => [ boolean, string | null ]
 
 	/**
 	 * Suck an item from the inventory in front of the turtle, or from an item floating in the world.
@@ -207,7 +207,7 @@ declare namespace turtle {
 	 * @throws If given an invalid number of items.
 	 * @tuplereturn
 	*/
-	function suck(count?: number): [ boolean, string | null ]
+	suck: (this: void, count?: number) => [ boolean, string | null ]
 
 	/**
 	 * Suck an item from the inventory above the turtle, or from an item floating in the world.
@@ -217,7 +217,7 @@ declare namespace turtle {
 	 * @throws If given an invalid number of items.
 	 * @tuplereturn
 	*/
-	function suckUp(count?: number): [ boolean, string | null ]
+	suckUp: (this: void, count?: number) => [ boolean, string | null ]
 
 	/**
 	 * Suck an item from the inventory below the turtle, or from an item floating in the world.
@@ -227,41 +227,41 @@ declare namespace turtle {
 	 * @throws If given an invalid number of items.
 	 * @tuplereturn
 	*/
-	function suckDown(count?: number): [ boolean, string | null ]
+	suckDown: (this: void, count?: number) => [ boolean, string | null ]
 
 	/**
 	*/
-	function getFuelLevel(): any
+	getFuelLevel: (this: void) => any
 
 	/**
 	*/
-	function refuel(count?: number): any
+	refuel: (this: void, count?: number) => any
 
 	/**
 	*/
-	function compareTo(slot: number): any
+	compareTo: (this: void, slot: number) => any
 
 	/**
 	*/
-	function transferTo(slot: number, count?: number): any
+	transferTo: (this: void, slot: number, count?: number) => any
 
 	/**
 	 * Get the currently selected slot.
 	 * @returns The current slot.
 	*/
-	function getSelectedSlot(): number
+	getSelectedSlot: (this: void) => number
 
 	/**
 	*/
-	function getFuelLimit(): any
+	getFuelLimit: (this: void) => any
 
 	/**
 	*/
-	function equipLeft(): any
+	equipLeft: (this: void) => any
 
 	/**
 	*/
-	function equipRight(): any
+	equipRight: (this: void) => any
 
 	/**
 	 * Get information about the block in front of the turtle.
@@ -269,7 +269,7 @@ declare namespace turtle {
 	 * @returns Information about the block in front, or a message explaining that there is no block.
 	 * @tuplereturn
 	*/
-	function inspect(): [ boolean, Block | string ]
+	inspect: (this: void) => [ boolean, Block | string ]
 
 	/**
 	 * Get information about the block above the turtle.
@@ -277,7 +277,7 @@ declare namespace turtle {
 	 * @returns Information about the above below, or a message explaining that there is no block.
 	 * @tuplereturn
 	*/
-	function inspectUp(): [ boolean, Block | string ]
+	inspectUp: (this: void) => [ boolean, Block | string ]
 
 	/**
 	 * Get information about the block below the turtle.
@@ -285,7 +285,7 @@ declare namespace turtle {
 	 * @returns Information about the block below, or a message explaining that there is no block.
 	 * @tuplereturn
 	*/
-	function inspectDown(): [ boolean, Block | string ]
+	inspectDown: (this: void) => [ boolean, Block | string ]
 
 	/**
 	 * Get information about the block below the turtle.
@@ -295,10 +295,10 @@ declare namespace turtle {
 	 * @throws If the slot is out of range.
 	 * @tuplereturn
 	*/
-	function getItemDetail(slot?: number, detailed?: boolean): null | Block
+	getItemDetail: (this: void, slot?: number, detailed?: boolean) => null | Block
 
 	/**
 	*/
-	function craft(limit: number): any
+	craft: (this: void, limit: number) => any
 
 }

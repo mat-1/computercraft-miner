@@ -41,7 +41,7 @@ function unstringifyPosition(position: string) {
 }
 
 function loadPosition() {
-	let file = fs.open('position.txt', 'r')
+	let [ file ] = fs.open('position.txt', 'r')
 	let data
 	if (file == null) {
 		return makeCoordinate(0, 0, 0)
@@ -51,3 +51,14 @@ function loadPosition() {
 		return unstringifyPosition(data)
 	}
 }
+
+let currentPosition = loadPosition()
+
+function savePosition() {
+	let [ file ] = fs.open('position.txt', 'w')
+	if (file != null) {
+		file.write(stringifyPosition(currentPosition))
+		file.close()
+	}
+}
+
