@@ -190,11 +190,11 @@ declare let fs: {
 	 * @param path The path to the file to open.
 	 * @param mode The mode to open the file with.
 	 * @throws If an invalid mode was specified.
-	 * @returns A file handle object for the file.\
+	 * @returns A file handle object for the file.
 	 * @returns A message explaining why the file cannot be opened.
 	 * @tuplereturn
 	*/
-	open: <RW extends 'r' | 'w'>(this: void, path: string, mode: RW) => RW extends 'r' ? [ typeof ReadHandle ] : [ typeof WriteHandle ] | [ null, string | null ] // TODO: make this its own thing
+	open: <RW extends 'r' | 'w'>(this: void, path: string, mode: RW) => RW extends 'r' ? [ typeof ReadHandle ] : [ typeof WriteHandle, null ] | [ null, string | null ] // TODO: make this its own thing
 
 
 

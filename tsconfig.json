@@ -1,13 +1,15 @@
 {
 	"compilerOptions": {
-	  "target": "esnext",
-	  "lib": ["esnext", "DOM"],
-	  "moduleResolution": "node",
-	  "types": [],
-	  "watch": true
+		"target": "esnext",
+		"lib": ["esnext", "DOM"],
+		"moduleResolution": "node",
+		"types": [],
+		"watch": true
 	},
 	"tstl": {
-	  "luaTarget": "JIT",
-	  "luaLibImport": "inline"
+		"luaTarget": "JIT",
+		"luaLibImport": "require",
+		"luaBundleEntry": "src/index.ts",
+		"luaBundle": "miner.lua"
 	}
-  }
+}
