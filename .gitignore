@@ -1,3 +1,5 @@
 node_modules
 miner.js
 world.txt
+direction.txt
+position.txt
