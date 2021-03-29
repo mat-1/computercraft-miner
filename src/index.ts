@@ -49,7 +49,7 @@ function moveInDirection(dir: world.DirectionUp) {
 		if (reason == 'Out of fuel')
 			refuelAll()
 		else if (reason == 'Movement obstructed') {
-			world.inspectInDirection(dir)
+			world.scanAround()
 			digInDirection(dir)
 		}
 		console.log(`Error moving: ${reason}`)
@@ -60,14 +60,14 @@ function moveInDirection(dir: world.DirectionUp) {
 function getDirectionTo(position: world.Position, preferVisited?: boolean) {
 	let allowedDirections: world.DirectionUp[] = []
 
+	if (position.up > world.currentPosition.up) allowedDirections.push('up')
+	if (position.up < world.currentPosition.up) allowedDirections.push('down')
+
 	if (position.north > world.currentPosition.north) allowedDirections.push('north')
 	if (position.north < world.currentPosition.north) allowedDirections.push('south')
 	
 	if (position.east > world.currentPosition.east) allowedDirections.push('east')
 	if (position.east < world.currentPosition.east) allowedDirections.push('west')
-	
-	if (position.up > world.currentPosition.up) allowedDirections.push('up')
-	if (position.up < world.currentPosition.up) allowedDirections.push('down')
 
 
 	if (allowedDirections.length == 0)
@@ -231,7 +231,7 @@ while (true) {
 		if (nearestMineablePosition)
 			recommendedDirection = getDirectionTo(nearestMineablePosition)
 		else
-			recommendedDirection = 'north'
+			recommendedDirection = world.currentDirection
 
 		console.log(`.To ${world.stringifyPosition(nearestMineablePosition)} ${recommendedDirection}`)
 		digInDirection(recommendedDirection)

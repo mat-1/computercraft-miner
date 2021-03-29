@@ -277,7 +277,7 @@ export function findNearestBlockPosition(blocks: string[], height?: number, cent
 }
 
 
-export function scanAround(blocks: string[]) {
+export function scanAround(blocks?: string[]): Position | null {
 	// If we've already scanned east, scan west. This saves a bit of time while turning
 
 	const [
@@ -309,6 +309,9 @@ export function scanAround(blocks: string[]) {
 
 
 	// we inspected in all directions, now return the nearest ore (if there is one)
-	return findNearestBlockPosition(blocks)
+	if (blocks)
+		return findNearestBlockPosition(blocks)
+	else
+		return null
 }
 

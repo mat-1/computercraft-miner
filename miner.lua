@@ -2043,7 +2043,11 @@ function ____exports.scanAround(self, blocks)
         ____exports.inspectInDirection(nil, back)
         ____exports.inspectInDirection(nil, left)
     end
-    return ____exports.findNearestBlockPosition(nil, blocks)
+    if blocks then
+        return ____exports.findNearestBlockPosition(nil, blocks)
+    else
+        return nil
+    end
 end
 return ____exports
 end,
@@ -2094,7 +2098,7 @@ function moveInDirection(self, dir)
         if reason == "Out of fuel" then
             refuelAll(nil)
         elseif reason == "Movement obstructed" then
-            world:inspectInDirection(dir)
+            world:scanAround()
             digInDirection(nil, dir)
         end
         print(
@@ -2104,6 +2108,12 @@ function moveInDirection(self, dir)
 end
 function getDirectionTo(self, position, preferVisited)
     local allowedDirections = {}
+    if position.up > world.currentPosition.up then
+        __TS__ArrayPush(allowedDirections, "up")
+    end
+    if position.up < world.currentPosition.up then
+        __TS__ArrayPush(allowedDirections, "down")
+    end
     if position.north > world.currentPosition.north then
         __TS__ArrayPush(allowedDirections, "north")
     end
@@ -2115,12 +2125,6 @@ function getDirectionTo(self, position, preferVisited)
     end
     if position.east < world.currentPosition.east then
         __TS__ArrayPush(allowedDirections, "west")
-    end
-    if position.up > world.currentPosition.up then
-        __TS__ArrayPush(allowedDirections, "up")
-    end
-    if position.up < world.currentPosition.up then
-        __TS__ArrayPush(allowedDirections, "down")
     end
     if #allowedDirections == 0 then
         error("Already here, no direction", 0)
@@ -2280,7 +2284,7 @@ while true do
         if nearestMineablePosition then
             recommendedDirection = getDirectionTo(nil, nearestMineablePosition)
         else
-            recommendedDirection = "north"
+            recommendedDirection = world.currentDirection
         end
         print(
             ((".To " .. world:stringifyPosition(nearestMineablePosition)) .. " ") .. tostring(recommendedDirection)
