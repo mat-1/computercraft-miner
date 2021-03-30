@@ -1,0 +1,6 @@
+{
+	"search.exclude": {
+		"**/miner-OLD.lua": true,
+		"**/miner.lua": true
+	}
+}

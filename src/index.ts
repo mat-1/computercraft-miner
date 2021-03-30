@@ -1,199 +1,48 @@
-/** @noResolution */
-
 import * as world from './world'
+import * as movement from './movement'
+import * as vec3 from './vec3'
+import * as state from './state'
+import * as pathing from './pathing'
 
 const TOTAL_SLOTS = 4 * 4
 
-function refuelAll() {
-	let couldRefuel = false
-	for (let i = 1; i <= TOTAL_SLOTS; i++) {
-		turtle.select(i)
-		let r = turtle.refuel()
-		if (r)
-			couldRefuel = true
-	}
-	if (couldRefuel)
-		console.log('Refueled turtle!')
-	else
-		console.log('Couldn\'t find any fuel :(')
-	turtle.select(1)
-}
 
 
-
-/** move in a specific direction (north south east west) */
-function moveInDirection(dir: world.DirectionUp) {
-	let success, reason
-
-	let previousPosition = world.currentPosition
-
-	world.savePosition(world.getCoordinatesForDirection(dir))
-
-
-	if (dir == 'up')
-		[ success, reason ] = turtle.up()
-	else if (dir == 'down')
-		[ success, reason ] = turtle.down()
-	else {
-		world.turnInDirection(dir)
-		;[ success, reason ] = turtle.forward()
-	}
-
-	
-	if (success) {
-		// since we moved to the block, we know it's air
-		world.setBlock(world.currentPosition, 'minecraft:air')
-	} else {
-		world.savePosition(previousPosition)
-
-		if (reason == 'Out of fuel')
-			refuelAll()
-		else if (reason == 'Movement obstructed') {
-			world.scanAround()
-			digInDirection(dir)
-		}
-		console.log(`Error moving: ${reason}`)
-	}
-}
-
-/** get the most optimal direction for getting to a position */
-function getDirectionTo(position: world.Position, preferVisited?: boolean) {
-	let allowedDirections: world.DirectionUp[] = []
-
-	if (position.up > world.currentPosition.up) allowedDirections.push('up')
-	if (position.up < world.currentPosition.up) allowedDirections.push('down')
-
-	if (position.north > world.currentPosition.north) allowedDirections.push('north')
-	if (position.north < world.currentPosition.north) allowedDirections.push('south')
-	
-	if (position.east > world.currentPosition.east) allowedDirections.push('east')
-	if (position.east < world.currentPosition.east) allowedDirections.push('west')
-
-
-	if (allowedDirections.length == 0)
-		throw 'Already here, no direction'
-
-	else if (preferVisited) {
-		for (const direction of allowedDirections) {
-			if (world.currentDirection == direction && world.isDirectionVisitedAir(direction))
-				return direction
-		}
-		for (const direction of allowedDirections) {
-			if (world.isDirectionVisitedAir(direction))
-				return direction
-		}
-	} else {
-		for (const direction of allowedDirections) {
-			if (world.currentDirection == direction && !world.isDirectionVisitedAir(direction))
-				return direction
-		}
-		for (const direction of allowedDirections) {
-			if (!world.isDirectionVisitedAir(direction))
-				return direction
-		}
-	}
-
-	for (const direction of allowedDirections) {
-		if (world.currentDirection == direction && world.currentDirection == direction)
-			return direction
-	}
-
-	return allowedDirections[0]
-}
-
-function isInventoryFull() {
-	return turtle.getItemCount(TOTAL_SLOTS) > 0
-}
-
-let headingToSpawn = false
-
-function suckInDirection(dir) {
-	let success, reason
-
-	if (dir == 'up')
-		[ success, reason ] = turtle.suckUp()
-	else if (dir == 'down')
-		[ success, reason ] = turtle.suckDown()
-	else {
-		world.turnInDirection(dir)
-		;[ success, reason ] = turtle.suck()
-	}
-
-	if (isInventoryFull() && !headingToSpawn)
-		depositAllAtSpawn()
-}
-
-// move in a specific direction (north south east west)
-function digInDirection(dir) {
-	let success, reason
-
-	if (dir == 'up')
-		[ success, reason ] = turtle.digUp()
-	else if (dir == 'down')
-		[ success, reason ] = turtle.digDown()
-	else {
-		world.turnInDirection(dir)
-		;[ success, reason ] = turtle.dig()
-	}
-
-	if (!success)
-		if (reason != 'Nothing to dig here')
-			throw `Error digging: ${reason}`
-	else
-		suckInDirection(dir)
-
-	let blockPosition = world.getCoordinatesForDirection(dir)
-
-	// it broke the block, so it's air now
-	world.setBlock(blockPosition, 'minecraft:air')
-}
 
 // return to 0, 0, 0
 function returnToSpawn() {
-	headingToSpawn = true
-	print('Going to spawn...')
+	state.setHeadingToSpawn(true)
+	console.log('Going to spawn...')
 
-	const spawnPosition = world.makeCoordinate(0, 0, 0)
+	const spawnPosition = new vec3.Vec3(0, 0, 0)
 
-	while (!(world.currentPosition.north === 0 && world.currentPosition.east === 0 && world.currentPosition.up === 0)) {
-		const recommendedDirection = getDirectionTo(spawnPosition, true)
-		digInDirection(recommendedDirection)
-		moveInDirection(recommendedDirection)
+	while (!(state.currentPosition.north === 0 && state.currentPosition.east === 0 && state.currentPosition.up === 0)) {
+		const recommendedDirection = pathing.getDirectionTo(spawnPosition, true)
+		console.log(',,recommendedDirection', recommendedDirection)
+		movement.digInDirection(recommendedDirection)
+		movement.moveInDirection(recommendedDirection)
 	}
 	
-	world.turnInDirection('north')
-	headingToSpawn = false
-}
-
-
-function scanForOres() {
-	return world.scanAround(world.ORES)
+	movement.turnInDirection('north')
+	state.setHeadingToSpawn(false)
 }
 
 
 function returnToStartingHeight() {
 	// already at the correct height, just return
-	if (world.currentPosition.up == 0) return
+	if (state.currentPosition.up == 0) return
 
-	if (world.currentPosition.up > 0) {
-		for (let i = 1; i < world.currentPosition.up; i ++) {
-			digInDirection('down')
-			moveInDirection('down')
+	if (state.currentPosition.up > 0) {
+		for (let i = 1; i < state.currentPosition.up; i ++) {
+			movement.digInDirection('down')
+			movement.moveInDirection('down')
 		}
-	} else if (world.currentPosition.up < 0) {
-		for (let i = 1; i < -world.currentPosition.up; i ++) {
-			digInDirection('up')
-			moveInDirection('up')
+	} else if (state.currentPosition.up < 0) {
+		for (let i = 1; i < -state.currentPosition.up; i ++) {
+			movement.digInDirection('up')
+			movement.moveInDirection('up')
 		}
 	}
-}
-
-function positionBetween(position1: world.Position, position2: world.Position): world.Position {
-	return world.makeCoordinate(
-		(position1.north + position2.north) / 2,
-		(position1.up + position2.up) / 2,
-		(position1.east + position2.east) / 2
-	)
 }
 
 function depositAllAtSpawn() {
@@ -211,54 +60,51 @@ function depositAllAtSpawn() {
 
 print('Ok')
 
-if (isInventoryFull())
+depositAllAtSpawn()
+
+state.updateInventoryFull()
+if (state.inventoryFull)
 	depositAllAtSpawn()
 
 
 while (true) {
-	const nearestOrePosition = scanForOres()
+	const nearestOrePosition = movement.scanAround(world.ORES)
 
 	if (nearestOrePosition) {
-		console.log(`To ${world.stringifyPosition(nearestOrePosition)}`)
-		const recommendedDirection = getDirectionTo(nearestOrePosition)
-		digInDirection(recommendedDirection)
-		moveInDirection(recommendedDirection)
+		console.log(`To ${nearestOrePosition.toString()}`)
+		const recommendedDirection = pathing.getDirectionTo(nearestOrePosition, true)
+		movement.digInDirection(recommendedDirection)
+		movement.moveInDirection(recommendedDirection)
 	} else {
 		returnToStartingHeight()
-		// let nearestMineablePosition = findNearestBlockPosition(UNDERGROUND_MINEABLE, 0, positionBetween(currentPosition, makeCoordinate(0, 0, 0)))
-		let nearestMineablePosition = world.findNearestBlockPosition(world.UNDERGROUND_MINEABLE, 0, world.makeCoordinate(0, 0, 0))
+		let nearestMineablePosition = world.findNearestUnexplored()
+		// let nearestMineablePosition = world.findNearestBlockPosition(world.UNDERGROUND_MINEABLE, 0, positionBetween(state.currentPosition, new vec3.Vec3(0, 0, 0)))
 		let recommendedDirection
 		if (nearestMineablePosition)
-			recommendedDirection = getDirectionTo(nearestMineablePosition)
+			recommendedDirection = pathing.getDirectionTo(nearestMineablePosition)
 		else
-			recommendedDirection = world.currentDirection
+			recommendedDirection = state.currentDirection
 
-		console.log(`.To ${world.stringifyPosition(nearestMineablePosition)} ${recommendedDirection}`)
-		digInDirection(recommendedDirection)
-		moveInDirection(recommendedDirection)
+		console.log(`.To ${nearestMineablePosition.toString()} ${recommendedDirection}`)
+		movement.digInDirection(recommendedDirection)
+		movement.moveInDirection(recommendedDirection)
 	}
+
+	movement.scanAround()
 
 	// digging up/down is cheap and it makes it easier to follow the turtle so we might as well
-	if (world.currentPosition.up == 0) {
-		world.inspectInDirection('up')
-		let upBlock = world.getBlock(world.getCoordinatesForDirection('up'))
+	if (state.currentPosition.up == 0) {
+		movement.inspectInDirection('up')
+		let upBlock = world.getBlock(state.getPositionForDirection('up'))
 		if (world.UNDERGROUND_MINEABLE.includes(upBlock))
-			digInDirection('up')
+			movement.digInDirection('up')
 	}
+
+	if (state.inventoryFull)
+		depositAllAtSpawn()
 
 	world.saveWorld()
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 

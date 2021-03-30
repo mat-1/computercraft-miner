@@ -1,50 +1,7 @@
-/** @noResolution */
+import * as vec3 from './vec3'
+import * as state from './state'
 
-export interface Position {
-	north: number
-	east: number
-	up: number
-}
 
-export function makeCoordinate(north: number, up: number, east: number): Position {
-	return { north: north, east: east, up: up}
-}
-
-export function stringifyPosition(position: Position): string {
-	if (position)
-		return `${position.north},${position.up},${position.east}`
-	else
-		return '?,?,?'
-}
-
-export function unstringifyPosition(position: string): Position {
-	let [ north, up, east ] = position.split(',')
-
-	return makeCoordinate(parseInt(north), parseInt(up), parseInt(east))
-}
-
-function loadPosition() {
-	let [ file ] = fs.open('position.txt', 'r')
-	let data
-	if (file == null) {
-		return makeCoordinate(0, 0, 0)
-	} else {
-		data = file.readAll()
-		file.close()
-		return unstringifyPosition(data)
-	}
-}
-
-export let currentPosition = loadPosition()
-
-export function savePosition(position: Position) {
-	currentPosition = position
-	let [ file ] = fs.open('position.txt', 'w')
-	if (file != null) {
-		file.write(stringifyPosition(currentPosition))
-		file.close()
-	}
-}
 
 function loadWorld() {
 	let [ file ] = fs.open('world.txt', 'r')
@@ -66,43 +23,6 @@ export function saveWorld() {
 	file.write(textutils.serialize(world))
 	file.close()
 }
-
-const DIRECTIONS_OFFSETS = {
-	north: makeCoordinate(1, 0, 0),
-	south: makeCoordinate(-1, 0, 0),
-
-	east: makeCoordinate(0, 0, 1),
-	west: makeCoordinate(0, 0, -1),
-
-	up: makeCoordinate(0, 1, 0),
-	down: makeCoordinate(0, -1, 0),
-}
-
-const directionsBack = {
-	north: 'south',
-	south: 'north',
-	east: 'west',
-	west: 'east',
-	up: 'down',
-	down: 'up',
-}
-
-const directionsRight = {
-	north: 'east',
-	south: 'west',
-	east: 'south',
-	west: 'north',
-}
-
-const directionsLeft = {
-	north: 'west',
-	south: 'east',
-	east: 'north',
-	west: 'south',
-}
-
-export type Direction = 'north' | 'east' | 'south' | 'west'
-export type DirectionUp = Direction | 'up' | 'down'
 
 export const ORES = [
 	'minecraft:coal_ore',
@@ -134,108 +54,24 @@ export const UNDERGROUND_MINEABLE = [
 	'blockus:bluestone',
 ]
 
-function loadDirection(): Direction {
-	const [ file ] = fs.open('direction.txt', 'r')
-	if (file === null) {
-		return 'north'
-	} else {
-		const data = file.readAll()
-		file.close()
-		return data as Direction
-	}
+
+export function setBlock(position: vec3.Vec3, block: string) {
+	world[position.toString()] = block
 }
 
-
-
-export let currentDirection: Direction = loadDirection()
-
-function saveDirection() {
-	const [ file, reason ] = fs.open('direction.txt', 'w')
-	file.write(currentDirection)
-	file.close()
-}
-
-
-/** get the coordinates for if the turtle were to move in a certain direction */
-export function getCoordinatesForDirection(dir: DirectionUp): Position {
-	const directionOffsets = DIRECTIONS_OFFSETS[dir]
-	return {
-		north: currentPosition.north + directionOffsets.north,
-		east: currentPosition.east + directionOffsets.east,
-		up: currentPosition.up + directionOffsets.up,
-	}
-}
-
-export function setBlock(position: Position, block: string) {
-	world[stringifyPosition(position)] = block
-}
-
-export function getBlock(position: Position): string {
-	return world[stringifyPosition(position)]
+export function getBlock(position: vec3.Vec3): string {
+	return world[position.toString()]
 }
 
 // the spawn coordinates are guaranteed to be air because the turtle is there
-setBlock(makeCoordinate(0, 0, 0), 'minecraft:air')
-
-/** face a specific direction */
-export function turnInDirection(dir: Direction) {
-	let previousDirection = currentDirection
-	currentDirection = dir
-	saveDirection()
-
-	if (dir == previousDirection) return
-	else if (dir == directionsBack[previousDirection]) { turtle.turnRight(); turtle.turnRight() }
-	else if (dir == directionsLeft[previousDirection]) { turtle.turnRight() }
-	else if (dir == directionsRight[previousDirection]) { turtle.turnLeft() }
-
-	else {
-		currentDirection = previousDirection
-		saveDirection()
-		throw `ERROR: unknown turn direction "${dir}"`
-	}
-}
+setBlock(new vec3.Vec3(0, 0, 0), 'minecraft:air')
 
 
-/** inspect the block in a certain direction, these are cached */
-export function inspectInDirection(dir: DirectionUp) {
-	let directionCoordinates = getCoordinatesForDirection(dir)
-
-	// we've already inspected here, no need to inspect again
-	if (getBlock(directionCoordinates))
-		return getBlock(directionCoordinates)
-
-	let inspectResponse: [ boolean, string | Block ] = null
-
-
-	if (dir == 'up') {
-		inspectResponse = turtle.inspectUp()
-	} else if (dir == 'down') {
-		inspectResponse = turtle.inspectDown()
-	} else {
-		// turn in the direction of the block we're inspecting and inspect it
-		turnInDirection(dir)
-		inspectResponse = turtle.inspect()
-	}
-
-	if (typeof inspectResponse[1] === 'string')
-		return
-
-	const success: boolean = inspectResponse[0]
-	const block: Block = inspectResponse[1]
-
-	// success is false if the block is air
-	const blockName: string = success ? block.name : 'minecraft:air'
-
-	// save the block to the world so we know not to check again later
-	setBlock(directionCoordinates, blockName)
-
-	return block
-}
 
 
 /** returns true if we are certain the block in this direction is air */
-export function isDirectionVisitedAir(dir: DirectionUp) {
-	const directionCoordinates = getCoordinatesForDirection(dir)
+export function isDirectionVisitedAir(dir: vec3.DirectionUp) {
+	const directionCoordinates = state.getPositionForDirection(dir)
 
 	if (getBlock(directionCoordinates))
 		return getBlock(directionCoordinates) == 'minecraft:air'
@@ -243,27 +79,22 @@ export function isDirectionVisitedAir(dir: DirectionUp) {
 		return false
 }
 
-function getDistanceTo(position: Position, position2: Position): number {
-	return Math.abs(position.north - position2.north)
-		 + Math.abs(position.east - position2.east)
-		 + Math.abs(position.up - position2.up)
-}
 
-export function findNearestBlockPosition(blocks: string[], height?: number, center?: Position): Position | null {
+export function findNearestBlockPosition(blocks: string[], height?: number, center?: vec3.Vec3): vec3.Vec3 | null {
 	if (center === null)
-		center = currentPosition
+		center = state.currentPosition
 
 	let nearestOreDistance = 99999
-	let nearestOrePosition: Position = null
+	let nearestOrePosition: vec3.Vec3 = null
 
 	for (const [ blockPositionString, block ] of Object.entries(world)) {
 		if (blocks.includes(block)) {
-			const blockPosition = unstringifyPosition(blockPositionString)
+			const blockPosition = vec3.parse(blockPositionString)
 			if (
 				(height == null || height === blockPosition.up)
-				&& (blockPositionString !== stringifyPosition(currentPosition))
+				&& (blockPositionString !== state.currentPosition.toString())
 			) {
-				const blockDistance = getDistanceTo(blockPosition, center)
+				const blockDistance = vec3.getDistanceTo(blockPosition, center)
 
 				if (blockDistance < nearestOreDistance) {
 					nearestOreDistance = blockDistance
@@ -277,41 +108,32 @@ export function findNearestBlockPosition(blocks: string[], height?: number, cent
 }
 
 
-export function scanAround(blocks?: string[]): Position | null {
-	// If we've already scanned east, scan west. This saves a bit of time while turning
-
-	const [
-		forward,
-		left,
-		right,
-		back
-	] = [
-		currentDirection as Direction,
-		directionsLeft[currentDirection] as Direction,
-		directionsRight[currentDirection] as Direction,
-		directionsBack[currentDirection] as Direction
-	]
-
-
-	inspectInDirection('up')
-	inspectInDirection('down')
-
-	if (getBlock(getCoordinatesForDirection(right))) {
-		inspectInDirection(forward)
-		inspectInDirection(left)
-		inspectInDirection(back)
-	} else {
-		inspectInDirection(forward)
-		inspectInDirection(right)
-		inspectInDirection(back)
-		inspectInDirection(left)
+export function countUnknownBlocksAround(position: vec3.Vec3, debug?: boolean): number {
+	let count = 0
+	for (const direction of Object.values(vec3.DIRECTIONS_OFFSETS)) {
+		const checkPosition = position.plus(direction.north, direction.up, direction.east)
+		if (getBlock(checkPosition) === null) {
+			if (debug) console.log(checkPosition, direction)
+			count ++
+		}
 	}
+	return count
+}
 
 
-	// we inspected in all directions, now return the nearest ore (if there is one)
-	if (blocks)
-		return findNearestBlockPosition(blocks)
+export function findNearestUnexplored(): vec3.Vec3 | null {
+	// const nearestUnexplored = vec3.spiral(512, vec3.positionBetween(new vec3.Vec3(0, 0, 0), state.currentPosition), (position: vec3.Vec3) => {
+	const nearestUnexplored = vec3.spiral(512, new vec3.Vec3(0, 0, 0), (position: vec3.Vec3) => {
+		const block = getBlock(position)
+		return block === null
+			&& (
+				position.north !== state.currentPosition.north
+				|| position.up !== state.currentPosition.up
+				|| position.east !== state.currentPosition.east
+			)
+	})
+	if (nearestUnexplored.length >= 1)
+		return nearestUnexplored[0]
 	else
 		return null
 }
-

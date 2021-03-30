@@ -175,7 +175,7 @@ end
 
 
 -- get the coordinates for if the turtle were to move in a certain direction
-local function getCoordinatesForDirection(dir)
+local function getPositionForDirection(dir)
 	local directionOffsets = DIRECTIONS_OFFSETS[dir]
 	return {
 		north = currentPosition.north + directionOffsets.north,
@@ -233,7 +233,7 @@ end
 -- inspect the block in a certain direction, these are cached
 local function inspectInDirection(dir)
 	print('inspectInDirection '..tostring(dir)..' '..stringifyPosition(currentPosition))
-	local directionCoordinates = getCoordinatesForDirection(dir)
+	local directionCoordinates = getPositionForDirection(dir)
 
 	-- we've already inspected here, no need to inspect again
 	if getBlock(directionCoordinates) then
@@ -268,7 +268,7 @@ end
 -- returns true if we are certain the block in this direction is air
 local function isDirectionVisitedAir(dir)
 	print('isDirectionVisitedAir '..tostring(dir))
-	local directionCoordinates = getCoordinatesForDirection(dir)
+	local directionCoordinates = getPositionForDirection(dir)
 	if getBlock(directionCoordinates) then
 		return getBlock(directionCoordinates) == 'minecraft:air'
 	end
@@ -284,7 +284,7 @@ local function moveInDirection(dir)
 
 	local previousPosition = currentPosition
 	print('moveInDirection '..tostring(dir))
-	currentPosition = getCoordinatesForDirection(dir)
+	currentPosition = getPositionForDirection(dir)
 	savePosition()
 
 
@@ -424,7 +424,7 @@ digInDirection = function(dir)
 	end
 
 	print('digInDirection '..tostring(dir))
-	local blockPosition = getCoordinatesForDirection(dir)
+	local blockPosition = getPositionForDirection(dir)
 
 	-- it broke the block, so it's air now
 	setBlock(blockPosition, 'minecraft:air')
@@ -518,7 +518,7 @@ local function scanForOres()
 	inspectInDirection('down')
 
 	print('scanForOres '..tostring(right)..' '..tostring(currentDirection))
-	if getBlock(getCoordinatesForDirection(right)) then
+	if getBlock(getPositionForDirection(right)) then
 		inspectInDirection(forward)
 		inspectInDirection(left)
 		inspectInDirection(back)
@@ -604,7 +604,7 @@ while true do
 	if (currentPosition.up == 0) then
 		inspectInDirection('up')
 		print('main up')
-		local upBlock = getBlock(getCoordinatesForDirection('up'))
+		local upBlock = getBlock(getPositionForDirection('up'))
 		if arrayContains(upBlock, UNDERGROUND_MINEABLE) then
 			digInDirection('up')
 		end
