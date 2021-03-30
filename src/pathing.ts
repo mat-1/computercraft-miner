@@ -38,11 +38,16 @@ export function getDirectionTo(position: vec3.Vec3, preferVisited?: boolean): ve
 
 		let unknownBlocksAround = world.countUnknownBlocksAround(state.getPositionForDirection(direction))
 
-		if (preferVisited) directionScore -= unknownBlocksAround
+		if (preferVisited) {
+			if (direction === 'up' || direction === 'down') {
+				directionScore -= unknownBlocksAround / 4
+			} else
+				directionScore -= unknownBlocksAround
+		}
 		else {
-			if (direction === 'up' || direction === 'down')
+			if (direction === 'up' || direction === 'down') {
 				directionScore += unknownBlocksAround / 4
-			else
+			} else
 				directionScore += unknownBlocksAround / 1.2
 		}
 
@@ -54,8 +59,8 @@ export function getDirectionTo(position: vec3.Vec3, preferVisited?: boolean): ve
 		else if (direction === 'south' && position.north < state.currentPosition.north) directionScore += 1.1
 		else if (direction === 'east' && position.east > state.currentPosition.east) directionScore += 1.1
 		else if (direction === 'west' && position.east < state.currentPosition.east) directionScore += 1.1
-		else if (direction === 'up' && position.up > state.currentPosition.up) directionScore += 5
-		else if (direction === 'down' && position.up > state.currentPosition.up) directionScore += 5
+		else if (direction === 'up' && position.up > state.currentPosition.up) directionScore += 1.1
+		else if (direction === 'down' && position.up > state.currentPosition.up) directionScore += 1.1
 
 		directionScore -= vec3.getDistanceTo(position, theoreticalPosition) / 2
 	

@@ -2300,7 +2300,11 @@ function ____exports.getDirectionTo(self, position, preferVisited)
             state:getPositionForDirection(direction)
         )
         if preferVisited then
-            directionScore = directionScore - unknownBlocksAround
+            if (direction == "up") or (direction == "down") then
+                directionScore = directionScore - (unknownBlocksAround / 4)
+            else
+                directionScore = directionScore - unknownBlocksAround
+            end
         else
             if (direction == "up") or (direction == "down") then
                 directionScore = directionScore + (unknownBlocksAround / 4)
@@ -2320,9 +2324,9 @@ function ____exports.getDirectionTo(self, position, preferVisited)
         elseif (direction == "west") and (position.east < state.currentPosition.east) then
             directionScore = directionScore + 1.1
         elseif (direction == "up") and (position.up > state.currentPosition.up) then
-            directionScore = directionScore + 5
+            directionScore = directionScore + 1.1
         elseif (direction == "down") and (position.up > state.currentPosition.up) then
-            directionScore = directionScore + 5
+            directionScore = directionScore + 1.1
         end
         directionScore = directionScore - (vec3:getDistanceTo(position, theoreticalPosition) / 2)
         if directionScore > bestDirectionScore then
