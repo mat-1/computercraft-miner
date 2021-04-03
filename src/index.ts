@@ -66,6 +66,7 @@ state.updateInventoryFull()
 if (state.inventoryFull)
 	depositAllAtSpawn()
 
+let miningOres = false
 
 while (true) {
 	const nearestOrePosition = movement.scanAround(world.ORES)
@@ -75,6 +76,7 @@ while (true) {
 		const recommendedDirection = pathing.getDirectionTo(nearestOrePosition, true)
 		movement.digInDirection(recommendedDirection)
 		movement.moveInDirection(recommendedDirection)
+		miningOres = true
 	} else {
 		returnToStartingHeight()
 		let nearestMineablePosition = world.findNearestUnexplored()

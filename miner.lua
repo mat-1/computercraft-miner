@@ -2250,7 +2250,7 @@ local state = require("state")
 local vec3 = require("vec3")
 local world = require("world")
 local movement = require("movement")
-function ____exports.getDirectionTo(self, position, preferVisited)
+function ____exports._getDirectionTo(self, position, preferVisited)
     local allowedDirections = {}
     if preferVisited then
         if position.north > state.currentPosition.north then
@@ -2272,22 +2272,22 @@ function ____exports.getDirectionTo(self, position, preferVisited)
             __TS__ArrayPush(allowedDirections, "down")
         end
     else
-        if (position.north + 1) >= state.currentPosition.north then
+        if (position.north + 2) >= state.currentPosition.north then
             __TS__ArrayPush(allowedDirections, "north")
         end
-        if (position.north - 1) <= state.currentPosition.north then
+        if (position.north - 2) <= state.currentPosition.north then
             __TS__ArrayPush(allowedDirections, "south")
         end
-        if (position.east + 1) >= state.currentPosition.east then
+        if (position.east + 2) >= state.currentPosition.east then
             __TS__ArrayPush(allowedDirections, "east")
         end
-        if (position.east - 1) <= state.currentPosition.east then
+        if (position.east - 2) <= state.currentPosition.east then
             __TS__ArrayPush(allowedDirections, "west")
         end
-        if (position.up + 1) >= state.currentPosition.up then
+        if (position.up + 2) >= state.currentPosition.up then
             __TS__ArrayPush(allowedDirections, "up")
         end
-        if (position.up - 1) <= state.currentPosition.up then
+        if (position.up - 2) <= state.currentPosition.up then
             __TS__ArrayPush(allowedDirections, "down")
         end
     end
@@ -2313,7 +2313,98 @@ function ____exports.getDirectionTo(self, position, preferVisited)
             end
         end
         if direction == state.currentDirection then
-            directionScore = directionScore + 2
+            directionScore = directionScore + 1
+        end
+        if (direction == "north") and (position.north > state.currentPosition.north) then
+            directionScore = directionScore + 1.1
+        elseif (direction == "south") and (position.north < state.currentPosition.north) then
+            directionScore = directionScore + 1.1
+        elseif (direction == "east") and (position.east > state.currentPosition.east) then
+            directionScore = directionScore + 1.1
+        elseif (direction == "west") and (position.east < state.currentPosition.east) then
+            directionScore = directionScore + 1.1
+        elseif (direction == "up") and (position.up > state.currentPosition.up) then
+            directionScore = directionScore + 1.1
+        elseif (direction == "down") and (position.up > state.currentPosition.up) then
+            directionScore = directionScore + 1.1
+        end
+        directionScore = directionScore - (vec3:getDistanceTo(position, theoreticalPosition) / 2)
+        if directionScore > bestDirectionScore then
+            bestDirectionScore = directionScore
+            bestDirection = direction
+        end
+    end
+    local bestUnknownBlocksAround = world:countUnknownBlocksAround(
+        state:getPositionForDirection(bestDirection),
+        true
+    )
+    print("best:", bestUnknownBlocksAround)
+    return bestDirection
+end
+function ____exports.getDirectionTo(self, position, preferVisited, nextTo)
+    local allowedDirections = {}
+    if preferVisited then
+        if position.north > state.currentPosition.north then
+            __TS__ArrayPush(allowedDirections, "north")
+        end
+        if position.north < state.currentPosition.north then
+            __TS__ArrayPush(allowedDirections, "south")
+        end
+        if position.east > state.currentPosition.east then
+            __TS__ArrayPush(allowedDirections, "east")
+        end
+        if position.east < state.currentPosition.east then
+            __TS__ArrayPush(allowedDirections, "west")
+        end
+        if position.up > state.currentPosition.up then
+            __TS__ArrayPush(allowedDirections, "up")
+        end
+        if position.up < state.currentPosition.up then
+            __TS__ArrayPush(allowedDirections, "down")
+        end
+    else
+        if (position.north + 2) >= state.currentPosition.north then
+            __TS__ArrayPush(allowedDirections, "north")
+        end
+        if (position.north - 2) <= state.currentPosition.north then
+            __TS__ArrayPush(allowedDirections, "south")
+        end
+        if (position.east + 2) >= state.currentPosition.east then
+            __TS__ArrayPush(allowedDirections, "east")
+        end
+        if (position.east - 2) <= state.currentPosition.east then
+            __TS__ArrayPush(allowedDirections, "west")
+        end
+        if (position.up + 2) >= state.currentPosition.up then
+            __TS__ArrayPush(allowedDirections, "up")
+        end
+        if (position.up - 2) <= state.currentPosition.up then
+            __TS__ArrayPush(allowedDirections, "down")
+        end
+    end
+    local bestDirection = nil
+    local bestDirectionScore = -999
+    for ____, direction in ipairs(allowedDirections) do
+        local theoreticalPosition = state:getPositionForDirection(direction)
+        local directionScore = 0
+        local unknownBlocksAround = world:countUnknownBlocksAround(
+            state:getPositionForDirection(direction)
+        )
+        if preferVisited then
+            if (direction == "up") or (direction == "down") then
+                directionScore = directionScore - (unknownBlocksAround / 4)
+            else
+                directionScore = directionScore - unknownBlocksAround
+            end
+        else
+            if (direction == "up") or (direction == "down") then
+                directionScore = directionScore + (unknownBlocksAround / 4)
+            else
+                directionScore = directionScore + (unknownBlocksAround / 1.2)
+            end
+        end
+        if direction == state.currentDirection then
+            directionScore = directionScore + 1
         end
         if (direction == "north") and (position.north > state.currentPosition.north) then
             directionScore = directionScore + 1.1
@@ -2418,6 +2509,7 @@ state:updateInventoryFull()
 if state.inventoryFull then
     depositAllAtSpawn(nil)
 end
+local miningOres = false
 while true do
     local nearestOrePosition = movement:scanAround(world.ORES)
     if nearestOrePosition then
@@ -2427,6 +2519,7 @@ while true do
         local recommendedDirection = pathing:getDirectionTo(nearestOrePosition, true)
         movement:digInDirection(recommendedDirection)
         movement:moveInDirection(recommendedDirection)
+        miningOres = true
     else
         returnToStartingHeight(nil)
         local nearestMineablePosition = world:findNearestUnexplored()
