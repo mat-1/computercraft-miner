@@ -8,7 +8,6 @@ const TOTAL_SLOTS = 4 * 4
 
 
 
-
 // return to 0, 0, 0
 function returnToSpawn() {
 	state.setHeadingToSpawn(true)
@@ -60,8 +59,6 @@ function depositAllAtSpawn() {
 
 print('Ok')
 
-depositAllAtSpawn()
-
 state.updateInventoryFull()
 if (state.inventoryFull)
 	depositAllAtSpawn()
@@ -107,13 +104,6 @@ while (true) {
 
 	world.saveWorld()
 }
-
-
-
-
-
-
-
 
 
 
