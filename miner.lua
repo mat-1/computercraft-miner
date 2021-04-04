@@ -2504,7 +2504,6 @@ local function depositAllAtSpawn(self)
     turtle.select(1)
 end
 print("Ok")
-depositAllAtSpawn(nil)
 state:updateInventoryFull()
 if state.inventoryFull then
     depositAllAtSpawn(nil)
